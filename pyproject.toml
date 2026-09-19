@@ -10,12 +10,15 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "reportlab>=4.0",   # décision 0002 : écrit le PDF, licence BSD
+    "opencv-python-headless>=4.9",   # vision classique, déterministe (cahier des charges §14.1)
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
+    "qrcode>=7.4",   # génère les QR de test — jamais utilisé en production
+    "pillow>=10.0",  # requis par qrcode pour produire une image
 ]
 
 [project.scripts]
