@@ -8,28 +8,24 @@
 
 ## Plan
 
-- [x] `tests/support/raster.py` — rastérisation pypdfium2 (décision 0002, test uniquement)
-- [x] `tests/support/deform.py` — rotation, perspective, flou, bruit, contraste, bavure, pliure
+- [x] `tests/support/raster.py` (pypdfium2) + `deform.py` (7 déformations nommées)
 - [x] `tests/test_synthetic.py`
-- [x] Corriger deux bugs de `#6` trouvés en testant contre du contenu réel (pas seulement
-      les marqueurs synthétiques isolés de `#6`)
+- [x] Corriger un bug de `#6` trouvé en testant contre du contenu réel
 - [ ] `test_round_trip_perspective_30_degres` — **bloqué**, voir `decisions/0005`
 
 ## Journal
 
 **`finalize --draft` ne servait à rien : corrigé dans `crank` d'abord.** Son message
 dit « corrige, ou déclare-toi bloqué avec --draft », mais le code refusait la PR avant
-même de regarder `--draft`. Trouvé en voulant l'utiliser pour de vrai. Corrigé sur
-`crank` (`703f999`) : l'hygiène du diff bloque toujours, le critère fonctionnel ne
-bloque plus hors `--draft`.
+même de regarder `--draft`. Corrigé sur `crank` (`703f999`) : l'hygiène du diff bloque
+toujours, le critère fonctionnel ne bloque plus hors `--draft`.
 
 **Le conflit de fond, découvert en écrivant le round-trip, pas en le lisant.** `#6` a
-choisi l'affine, en supposant l'affine suffisante pour un scan à plat.
-`test_round_trip_perspective_30_degres` demande une vraie perspective (§13.1 la
-distingue de la rotation ; §9.4 en fait un cas du canal photo). Vérifié
-numériquement (`decisions/0005`) : une affine ajustée sur une vraie perspective à 30°
-laisse des dizaines de pixels d'erreur, plus qu'une bulle QCM. Je ne tranche pas
-seul un changement qui reviendrait sur le modèle géométrique d'une tâche déjà mergée.
+choisi l'affine, en supposant le scan à plat suffisant. `test_round_trip_perspective_
+30_degres` demande une vraie perspective (§13.1 la distingue de la rotation ; §9.4 en
+fait un cas du canal photo). Vérifié numériquement (`decisions/0005`) : une affine
+ajustée sur une vraie perspective à 30° laisse des dizaines de pixels d'erreur, plus
+qu'une bulle QCM. Je ne tranche pas seul un retour sur une tâche déjà mergée.
 
 **Un bug réel dans `find_marker_centers` (#6), trouvé en le confrontant à une vraie
 page construite**, pas aux marqueurs synthétiques isolés de ses propres tests : le
