@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tali"
+version = "0.0.1"
+description = "Aide à la correction de copies d'examen scannées"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+]
+
+[project.scripts]
+tali = "tali.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/tali"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

@@ -1,0 +1,24 @@
+# Configuration crank — voir `crank --help`
+
+[crank]
+wip_max = 4              # dimensionné pour qu'UNE session vide la file
+max_diff_lines = 300     # une PR relisible, ou pas de PR
+main_branch = "main"
+
+[checks]
+# Lancées par `crank finalize`, en plus du critère « done » de la tâche.
+# Une PR n'est jamais présentée à la relecture avec un test rouge.
+tests = ".venv/bin/python -m pytest -q"
+
+[roles.feature]
+tier = "P2"
+paths = ["src/**", "tests/**"]
+
+[roles.test]
+tier = "P3"
+paths = ["tests/**"]      # ne peut PAS toucher au code de production
+
+[roles.doc]
+tier = "P4"
+paths = ["docs/**", "README.md", "examples/**", "src/**", ".crank/lessons.md"]
+docstrings_only = true    # dans src/**, seules les docstrings peuvent changer

@@ -1,0 +1,3 @@
+[submodule "tools/crank"]
+	path = tools/crank
+	url = git@github.com:ocots/crank.git

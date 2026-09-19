@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# DONNÉES D'EXAMEN — ne doivent JAMAIS entrer dans l'historique git.
+#
+# Copies scannées, notes et listes nominatives sont des données personnelles en
+# contexte scolaire (cahier des charges §10.2). Un commit accidentel ne se répare
+# pas par un `git rm` : il faut réécrire l'historique — et si le dépôt a déjà été
+# poussé, c'est trop tard.
+#
+# Règle : les données d'un examen vivent HORS du dépôt, dans leur propre dossier.
+# Ce qui suit n'est qu'un filet de sécurité.
+# ─────────────────────────────────────────────────────────────────────────────
+scans/
+work/
+out/
+build/
+roster.csv
+roster*.csv
+notes.csv
+copies-annotees/
+examen-*/
+exam-*/
+
+# PDF et images produits (les fixtures versionnées vont dans tests/fixtures/)
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+!docs/**/*.png
+!tests/fixtures/**
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+.venv/
+venv/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Système et éditeurs
+# ─────────────────────────────────────────────────────────────────────────────
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Orchestration
+#
+# .crank/runs/ et .crank/archived/ sont VOLONTAIREMENT versionnés : les suivis
+# d'intervention sont la mémoire longue du projet (voir AGENTS.md).
+#
+# tools/crank est un sous-module git (github.com/ocots/crank). Son contenu est
+# versionné dans SON dépôt ; ici seul le commit pointé l'est.
+#     git submodule update --init   après un clone
+# ─────────────────────────────────────────────────────────────────────────────
