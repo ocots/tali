@@ -8,7 +8,9 @@ version = "0.0.1"
 description = "Aide à la correction de copies d'examen scannées"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "reportlab>=4.0",   # décision 0002 : écrit le PDF, licence BSD
+]
 
 [project.optional-dependencies]
 dev = [
