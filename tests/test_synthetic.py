@@ -1,0 +1,91 @@
+"""Corpus synthétique — rastérisation, déformations, round-trip (cahier des charges §13.1).
+
+L'actif de test le plus précieux du projet : générer une copie, la rendre en image, la
+déformer, vérifier que le pipeline retrouve exactement la vérité terrain connue — ou
+refuse plutôt que de se tromper en silence.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import numpy as np
+import pytest
+
+from tali.render.dimensions import DEFAULT
+from tali.services.build import build
+from tali.vision.locate import LocateError, locate, marker_positions
+from tali.vision.qr import decode_page_qr
+
+from tests.support import deform
+from tests.support.raster import rasterize
+
+EXAMPLE = Path(__file__).parents[1] / "examples" / "synthetic-exam" / "exam.toml"
+DPI = 200
+TOLERANCE_PX = 2.0  # antialiasing + seuillage : « exact » à l'arrondi de rastérisation près
+
+
+@pytest.fixture(scope="module")
+def rendered_page(tmp_path_factory: pytest.TempPathFactory) -> np.ndarray:
+    """Une copie construite puis rastérisée, réutilisée par les tests de ce module —
+    la reconstruire à chaque test ralentirait sans rien vérifier de plus."""
+    exam_dir = tmp_path_factory.mktemp("corpus")
+    (exam_dir / "exam.toml").write_text(EXAMPLE.read_text().replace("copies = 220", "copies = 1"))
+    result = build(exam_dir)
+    return rasterize(result.out_dir / "copies" / "0001.pdf", dpi=DPI)
+
+
+def test_rend_une_page_a_200_dpi(rendered_page: np.ndarray) -> None:
+    """A4 à 200 dpi : 1654 × 2339 px — attrape une conversion mm/points/pixels erronée
+    n'importe où dans la chaîne, sans inspection visuelle."""
+    largeur = round(DEFAULT.page_width_mm / 25.4 * DPI)
+    hauteur = round(DEFAULT.page_height_mm / 25.4 * DPI)
+    assert rendered_page.shape == (hauteur, largeur)
+
+
+def test_round_trip_sans_deformation(rendered_page: np.ndarray) -> None:
+    """QR et marqueurs retrouvent exactement ce qui a servi à générer la page."""
+    payload = decode_page_qr(rendered_page)
+    assert payload.exam_id == "synthetic-2026"
+    assert payload.copy_id == 1
+
+    transform = locate(rendered_page)
+    px_per_mm = DPI / 25.4
+    for x_mm, y_mm in marker_positions().values():
+        x_px, y_px = transform.to_pixels(x_mm, y_mm)
+        assert x_px == pytest.approx(x_mm * px_per_mm, abs=TOLERANCE_PX)
+        assert y_px == pytest.approx(y_mm * px_per_mm, abs=TOLERANCE_PX)
+
+
+def test_round_trip_perspective_30_degres(rendered_page: np.ndarray) -> None:
+    """Bloqué par `decisions/0005` (proposée) : `locate()` (#6) est affine, une vraie
+    perspective à 30° ne peut pas s'y ajuster exactement. Voir le suivi de cette tâche
+    pour la mesure de l'écart et la recommandation."""
+    deformed = deform.perspective(rendered_page, degrees=30.0)
+    transform = locate(deformed)  # peut lever LocateError, ou réussir avec un écart trop grand
+
+    px_per_mm = DPI / 25.4
+    for x_mm, y_mm in marker_positions().values():
+        x_px, y_px = transform.to_pixels(x_mm, y_mm)
+        vraie_x, vraie_y = deform.perspective_point(rendered_page.shape, x_mm * px_per_mm, y_mm * px_per_mm, 30.0)
+        assert x_px == pytest.approx(vraie_x, abs=TOLERANCE_PX)
+        assert y_px == pytest.approx(vraie_y, abs=TOLERANCE_PX)
+
+
+@pytest.mark.parametrize(
+    "amplitude, appliquer",
+    [
+        ("rotation extrême (45°) + flou fort + bruit fort", lambda img: deform.noise(
+            deform.blur(deform.rotate(img, 45.0), sigma=6.0), sigma=60.0
+        )),
+        ("perspective extrême (60°)", lambda img: deform.perspective(img, degrees=60.0)),
+    ],
+    ids=["rotation-flou-bruit", "perspective-extreme"],
+)
+def test_refuse_plutot_que_de_se_tromper_aux_extremes(
+    rendered_page: np.ndarray, amplitude: str, appliquer
+) -> None:
+    """Le critère le plus important : à ces amplitudes, un refus explicite, jamais un
+    recalage silencieusement faux qui corromprait toute la notation en aval."""
+    with pytest.raises(LocateError):
+        locate(appliquer(rendered_page))
