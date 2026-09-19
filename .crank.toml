@@ -13,7 +13,8 @@ tests = ".venv/bin/python -m pytest -q"
 [roles.feature]
 tier = "P2"
 # pyproject.toml : une tâche a le droit d'ajouter la dépendance qu'elle introduit.
-paths = ["src/**", "tests/**", ".crank/runs/**", "pyproject.toml"]
+# examples/** : une tâche a le droit d'écrire l'exemple synthétique qui la vérifie.
+paths = ["src/**", "tests/**", ".crank/runs/**", "pyproject.toml", "examples/**"]
 
 [roles.test]
 tier = "P3"
