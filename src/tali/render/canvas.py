@@ -21,7 +21,7 @@ from tali.render.geometry import mm_to_points, to_reportlab
 class Backend(Protocol):
     """Ce dont `Canvas` a besoin d'un moteur de rendu — en points, origine bas-gauche."""
 
-    def rect(self, x: float, y: float, width: float, height: float) -> None: ...
+    def rect(self, x: float, y: float, width: float, height: float, fill: bool) -> None: ...
     def circle(self, x: float, y: float, radius: float) -> None: ...
     def text(self, x: float, y: float, content: str, size: float) -> None: ...
     def qr(self, x: float, y: float, size: float, payload: str) -> None: ...
@@ -33,8 +33,8 @@ class ReportLabBackend:
     def __init__(self, path: str | Path, width_pt: float, height_pt: float) -> None:
         self._pdf = _ReportLabCanvas(str(path), pagesize=(width_pt, height_pt))
 
-    def rect(self, x: float, y: float, width: float, height: float) -> None:
-        self._pdf.rect(x, y, width, height)
+    def rect(self, x: float, y: float, width: float, height: float, fill: bool = False) -> None:
+        self._pdf.rect(x, y, width, height, fill=fill)
 
     def circle(self, x: float, y: float, radius: float) -> None:
         self._pdf.circle(x, y, radius)
@@ -70,9 +70,11 @@ class Canvas:
         self._backend = backend
         self._page_height_mm = page_height_mm
 
-    def rect(self, x_mm: float, y_mm: float, width_mm: float, height_mm: float) -> None:
+    def rect(
+        self, x_mm: float, y_mm: float, width_mm: float, height_mm: float, *, fill: bool = False
+    ) -> None:
         x, y = to_reportlab(x_mm, y_mm + height_mm, self._page_height_mm)
-        self._backend.rect(x, y, mm_to_points(width_mm), mm_to_points(height_mm))
+        self._backend.rect(x, y, mm_to_points(width_mm), mm_to_points(height_mm), fill)
 
     def circle(self, x_mm: float, y_mm: float, radius_mm: float) -> None:
         x, y = to_reportlab(x_mm, y_mm, self._page_height_mm)

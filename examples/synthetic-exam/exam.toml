@@ -1,0 +1,25 @@
+# Examen entièrement synthétique — aucune donnée réelle (décision 0004).
+# Sert d'exemple exécutable et de fixture de test (test_build_e2e.py).
+
+[exam]
+id = "synthetic-2026"
+title = "Examen synthétique — exemple"
+seed = 1
+copies = 220
+
+[answer_sheet]
+separate = true
+pages = 1
+
+[identity]
+roster = "roster.csv"
+
+[shuffle]
+exercises = false
+questions = "none"
+answers = false
+
+[phases]
+note = "2026-01-01T00:00"
+correction = "2026-01-02T00:00"
+claims_deadline = "2026-01-09T23:59"

@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 dependencies = [
     "reportlab>=4.0",   # décision 0002 : écrit le PDF, licence BSD
     "opencv-python-headless>=4.9",   # vision classique, déterministe (cahier des charges §14.1)
+    "click>=8.1",   # interface en ligne de commande — BSD, même famille que crank
 ]
 
 [project.optional-dependencies]
