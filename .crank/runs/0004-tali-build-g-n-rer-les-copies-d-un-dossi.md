@@ -20,21 +20,21 @@ encore rédigé (#9, human-only), et son analyse est hors périmètre de novembr
 (`PLACEHOLDER_*`), documentés comme tels — cette tâche prouve la chaîne
 exam.toml → copies, pas le contenu d'un examen réel.
 
-**`src/tali/cli.py` n'existait pas** malgré la référence dans `pyproject.toml`
-(`tali = "tali.cli:app"`). Créé avec `click` (même famille que `crank`), ajouté aux
-dépendances. Une seule commande pour l'instant : `build`.
+**`src/tali/cli.py` n'existait pas** malgré la référence dans `pyproject.toml`. Créé
+avec `click` (même famille que `crank`), ajouté aux dépendances. Une commande : `build`.
 
-**`Canvas.rect` ne savait pas remplir** — nécessaire pour les marqueurs de calage
-(carrés pleins), pas pour les cadres (contour seul). Ajouté un paramètre `fill: bool
-= False` à `Canvas.rect`/`Backend.rect`/`ReportLabBackend.rect`, rétrocompatible ;
-`test_rect_ne_remplit_pas_par_defaut` couvre le défaut et le cas explicite.
+**`Canvas.rect` ne savait pas remplir** — nécessaire pour les marqueurs (carrés
+pleins), pas pour les cadres (contour seul). Ajouté `fill: bool = False`, rétro-
+compatible ; `test_rect_ne_remplit_pas_par_defaut` couvre les deux cas.
 
-**L'exemple synthétique sert aussi de fixture** (décision 0004) : les tests copient
-`examples/synthetic-exam/exam.toml` dans un `tmp_path`, jamais n'écrivent dans
-`examples/` — le dépôt ne doit produire aucune donnée, même de test.
+**`examples/**` n'était couvert que par le rôle `doc`, jamais `feature`** — corrigé sur
+`main`, hors PR (troisième défaut de ce genre trouvé en exécutant, pas en relisant).
+
+L'exemple synthétique sert aussi de fixture (décision 0004) : les tests le copient dans
+un `tmp_path`, jamais n'écrivent dans `examples/`.
 
 Mutation-testés les deux tests du contrat (troncature d'une copie, clé non
-déterministe) : les deux mutants sont tués.
+déterministe) : tués.
 
 ## Bilan
 
@@ -44,9 +44,7 @@ chemin configuré — vérifié par `test_cli_build_utilise_le_dossier_courant`.
 
 ## Points d'incertitude
 
-- Une seule page par copie : `answer_sheet.pages` n'est pas encore consulté. Les sujets
-  à plusieurs pages ne sont pas couverts.
-- Les comptages de contenu sont provisoires (`PLACEHOLDER_*`) — à remplacer quand le
-  sujet réel sera analysable, hors périmètre de novembre pour l'instant.
-- 220 PDF réels par test (~2,5 s) : la suite complète est passée de ~12 s à ~22 s.
-  À surveiller si d'autres tâches ajoutent des tests aussi coûteux.
+- Une seule page par copie : `answer_sheet.pages` n'est pas encore consulté.
+- Comptages de contenu provisoires (`PLACEHOLDER_*`), à remplacer quand le sujet réel
+  sera analysable — hors périmètre de novembre pour l'instant.
+- 220 PDF réels par test : la suite est passée de ~12 s à ~22 s, à surveiller.
