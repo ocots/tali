@@ -12,13 +12,13 @@ tests = ".venv/bin/python -m pytest -q"
 
 [roles.feature]
 tier = "P2"
-paths = ["src/**", "tests/**"]
+paths = ["src/**", "tests/**", ".crank/runs/**"]
 
 [roles.test]
 tier = "P3"
-paths = ["tests/**"]      # ne peut PAS toucher au code de production
+paths = ["tests/**", ".crank/runs/**"]      # ne peut PAS toucher au code de production
 
 [roles.doc]
 tier = "P4"
-paths = ["docs/**", "README.md", "examples/**", "src/**", ".crank/lessons.md"]
+paths = ["docs/**", "README.md", "examples/**", "src/**", ".crank/lessons.md", ".crank/runs/**"]
 docstrings_only = true    # dans src/**, seules les docstrings peuvent changer

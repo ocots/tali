@@ -70,7 +70,7 @@ ISSUES: list[Issue] = [
             "décision de conception structurante, pas un détail d'implémentation."
         ),
         done=(
-            f"pytest -q {T}/test_model.py::test_round_trip_toml "
+            f".venv/bin/python -m pytest -q {T}/test_model.py::test_round_trip_toml "
             f"{T}/test_model.py::test_rejette_un_champ_inconnu_en_le_nommant "
             f"{T}/test_model.py::test_cle_de_correction_est_par_copie"
         ),
@@ -96,7 +96,7 @@ ISSUES: list[Issue] = [
             "Cette intention est **vérifiée, pas promise** — voir le dernier critère."
         ),
         done=(
-            f"pytest -q {T}/test_canvas.py::test_origine_en_haut_a_gauche "
+            f".venv/bin/python -m pytest -q {T}/test_canvas.py::test_origine_en_haut_a_gauche "
             f"{T}/test_canvas.py::test_conversion_millimetres_vers_points "
             f"{T}/test_canvas.py::test_qr_pose_a_la_position_demandee "
             f"{T}/test_canvas.py::test_reportlab_nest_importe_que_dans_render"
@@ -123,7 +123,7 @@ ISSUES: list[Issue] = [
             "23 novembre : la feuille est imprimée une fois."
         ),
         done=(
-            f"pytest -q {T}/test_sheet.py::test_cinq_marqueurs_dont_un_asymetrique "
+            f".venv/bin/python -m pytest -q {T}/test_sheet.py::test_cinq_marqueurs_dont_un_asymetrique "
             f"{T}/test_sheet.py::test_template_json_donne_toute_zone_par_identifiant "
             f"{T}/test_sheet.py::test_inventaire_exact_des_zones"
         ),
@@ -151,7 +151,7 @@ ISSUES: list[Issue] = [
             "+ `build/template.json`. Sans mélange pour l'instant (il viendra en M3)."
         ),
         done=(
-            f"pytest -q {T}/test_build_e2e.py::test_produit_exactement_n_copies "
+            f".venv/bin/python -m pytest -q {T}/test_build_e2e.py::test_produit_exactement_n_copies "
             f"{T}/test_build_e2e.py::test_deux_executions_donnent_les_memes_cles"
         ),
         touche=(f"{P}/cli.py", f"{P}/services/**", f"{T}/test_build_e2e.py", "examples/**"),
@@ -178,7 +178,7 @@ ISSUES: list[Issue] = [
             "lire de travers une feuille d'une autre session."
         ),
         done=(
-            f"pytest -q {T}/test_qr.py::test_decode_un_qr_genere "
+            f".venv/bin/python -m pytest -q {T}/test_qr.py::test_decode_un_qr_genere "
             f"{T}/test_qr.py::test_refuse_une_version_de_gabarit_inconnue"
         ),
         touche=(f"{P}/vision/**", f"{T}/test_qr.py"),
@@ -192,7 +192,7 @@ ISSUES: list[Issue] = [
             "millimètres ↔ pixels qui permet de découper n'importe quelle zone du gabarit."
         ),
         done=(
-            f"pytest -q {T}/test_locate.py::test_retrouve_une_homographie_connue "
+            f".venv/bin/python -m pytest -q {T}/test_locate.py::test_retrouve_une_homographie_connue "
             f"{T}/test_locate.py::test_leve_orientation_180_degres_sans_qr "
             f"{T}/test_locate.py::test_refuse_si_moins_de_trois_marqueurs"
         ),
@@ -221,7 +221,7 @@ ISSUES: list[Issue] = [
             "consommateur, et un créneau de relecture est plus cher que ça."
         ),
         done=(
-            f"pytest -q {T}/test_synthetic.py::test_rend_une_page_a_200_dpi "
+            f".venv/bin/python -m pytest -q {T}/test_synthetic.py::test_rend_une_page_a_200_dpi "
             f"{T}/test_synthetic.py::test_round_trip_sans_deformation "
             f"{T}/test_synthetic.py::test_round_trip_perspective_30_degres "
             f"{T}/test_synthetic.py::test_refuse_plutot_que_de_se_tromper_aux_extremes"
