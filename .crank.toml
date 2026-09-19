@@ -14,13 +14,17 @@ tests = ".venv/bin/python -m pytest -q"
 tier = "P2"
 # pyproject.toml : une tâche a le droit d'ajouter la dépendance qu'elle introduit.
 # examples/** : une tâche a le droit d'écrire l'exemple synthétique qui la vérifie.
-paths = ["src/**", "tests/**", ".crank/runs/**", "pyproject.toml", "examples/**"]
+# decisions/** : AGENTS.md demande justement de proposer un fichier ici en chemin.
+paths = ["src/**", "tests/**", ".crank/runs/**", "pyproject.toml", "examples/**", "decisions/**"]
 
 [roles.test]
 tier = "P3"
-paths = ["tests/**", ".crank/runs/**"]      # ne peut PAS toucher au code de production
+paths = ["tests/**", ".crank/runs/**", "decisions/**"]      # ne peut PAS toucher au code de production
 
 [roles.doc]
 tier = "P4"
-paths = ["docs/**", "README.md", "examples/**", "src/**", ".crank/lessons.md", ".crank/runs/**"]
+paths = [
+    "docs/**", "README.md", "examples/**", "src/**",
+    ".crank/lessons.md", ".crank/runs/**", "decisions/**",
+]
 docstrings_only = true    # dans src/**, seules les docstrings peuvent changer
