@@ -14,27 +14,22 @@
 
 ## Journal
 
-**Pas de contenu réel pour dessiner les zones QCM/ouvertes** : le sujet n'est pas
-encore rédigé (#9, human-only), et son analyse est hors périmètre de novembre
-(AGENTS.md). `build_template` est appelé avec des comptages **provisoires**
-(`PLACEHOLDER_*`), documentés comme tels — cette tâche prouve la chaîne
+**Pas de contenu réel pour les zones QCM/ouvertes** : le sujet n'est pas encore
+rédigé (#9, human-only), son analyse est hors périmètre de novembre. `build_template`
+prend des comptages **provisoires** (`PLACEHOLDER_*`) — cette tâche prouve la chaîne
 exam.toml → copies, pas le contenu d'un examen réel.
 
 **`src/tali/cli.py` n'existait pas** malgré la référence dans `pyproject.toml`. Créé
-avec `click` (même famille que `crank`), ajouté aux dépendances. Une commande : `build`.
+avec `click`, ajouté aux dépendances. Une commande : `build`.
 
-**`Canvas.rect` ne savait pas remplir** — nécessaire pour les marqueurs (carrés
-pleins), pas pour les cadres (contour seul). Ajouté `fill: bool = False`, rétro-
-compatible ; `test_rect_ne_remplit_pas_par_defaut` couvre les deux cas.
+**`Canvas.rect` ne savait pas remplir** — nécessaire pour les marqueurs, pas les
+cadres. Ajouté `fill: bool = False`, rétrocompatible.
 
 **`examples/**` n'était couvert que par le rôle `doc`, jamais `feature`** — corrigé sur
 `main`, hors PR (troisième défaut de ce genre trouvé en exécutant, pas en relisant).
+L'exemple sert aussi de fixture (décision 0004) : les tests le copient dans `tmp_path`.
 
-L'exemple synthétique sert aussi de fixture (décision 0004) : les tests le copient dans
-un `tmp_path`, jamais n'écrivent dans `examples/`.
-
-Mutation-testés les deux tests du contrat (troncature d'une copie, clé non
-déterministe) : tués.
+Mutation-testés les deux tests du contrat (troncature, clé non déterministe) : tués.
 
 ## Bilan
 
