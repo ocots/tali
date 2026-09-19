@@ -17,50 +17,42 @@
 
 ## Journal
 
-**`finalize --draft` ne servait à rien : corrigé dans `crank` d'abord.** Son message dit
-« corrige, ou déclare-toi bloqué avec --draft », mais le code refusait la PR AVANT même
-de regarder `--draft` — l'option n'avait jamais d'effet. Trouvé en voulant l'utiliser
-pour de vrai. Corrigé sur `crank` (`703f999`) : l'hygiène du diff bloque toujours, le
-critère fonctionnel ne bloque plus hors `--draft`.
+**`finalize --draft` ne servait à rien : corrigé dans `crank` d'abord.** Son message
+dit « corrige, ou déclare-toi bloqué avec --draft », mais le code refusait la PR avant
+même de regarder `--draft`. Trouvé en voulant l'utiliser pour de vrai. Corrigé sur
+`crank` (`703f999`) : l'hygiène du diff bloque toujours, le critère fonctionnel ne
+bloque plus hors `--draft`.
 
 **Le conflit de fond, découvert en écrivant le round-trip, pas en le lisant.** `#6` a
-choisi une transformation affine, en supposant l'affine suffisante pour un scan à plat.
-`test_round_trip_perspective_30_degres` demande une vraie perspective (§13.1 la liste
-séparément de la rotation ; §9.4 en fait un cas explicite du canal photo). Vérifié
-numériquement (voir `decisions/0005`) : une affine ajustée sur une vraie perspective à
-30° laisse des dizaines de pixels d'erreur — largement plus qu'une bulle QCM. Je ne
-tranche pas seul un changement qui reviendrait sur le modèle géométrique d'une tâche déjà
-mergée : décision proposée, recommandation donnée, en attente.
+choisi l'affine, en supposant l'affine suffisante pour un scan à plat.
+`test_round_trip_perspective_30_degres` demande une vraie perspective (§13.1 la
+distingue de la rotation ; §9.4 en fait un cas du canal photo). Vérifié
+numériquement (`decisions/0005`) : une affine ajustée sur une vraie perspective à 30°
+laisse des dizaines de pixels d'erreur, plus qu'une bulle QCM. Je ne tranche pas
+seul un changement qui reviendrait sur le modèle géométrique d'une tâche déjà mergée.
 
-**Deux bugs trouvés dans `find_marker_centers` (#6) en le confrontant à une vraie page
-construite**, pas aux marqueurs synthétiques isolés des tests de `#6` :
-1. Le remplissage se mesurait par l'aire du contour (`cv2.contourArea`), qui vaut ~toute
-   la boîte même pour un contour **creux** — chaque case des grilles NOM/PRÉNOM (un cadre,
-   pas un carré plein) était détectée comme marqueur. Corrigé en mesurant les pixels
-   réellement sombres dans le rectangle englobant.
-2. Un piège de cache : après cette correction, un `__pycache__` obsolète (d'une édition
-   précédente dans ce même worktree) a fait croire à un troisième faux positif près du
-   QR pendant près d'une heure d'investigation. Réglé en vidant les `__pycache__` et en
-   revérifiant avec `python -B`. Aucun code n'a été ajouté pour ce « bug » : il n'existait
-   pas. Noté ici pour ne pas refaire l'enquête si ça se reproduit.
+**Un bug réel dans `find_marker_centers` (#6), trouvé en le confrontant à une vraie
+page construite**, pas aux marqueurs synthétiques isolés de ses propres tests : le
+remplissage se mesurait par l'aire du contour (`cv2.contourArea`), qui vaut ~toute la
+boîte même pour un contour **creux** — chaque case des grilles NOM/PRÉNOM était
+détectée comme marqueur. Corrigé en mesurant les pixels réellement sombres. (Un
+second « bug » suspecté ensuite près du QR s'est révélé être un `__pycache__`
+obsolète de ce worktree — vidé, revérifié avec `python -B`, aucun code à changer.)
 
-Les trois tests atteignables mutation-testés (seuil de remplissage relâché, facteur
-dpi erroné, une déformation extrême neutralisée) : les trois mutants sont tués.
+Les trois tests atteignables mutation-testés (seuil relâché, facteur dpi erroné,
+déformation extrême neutralisée) : les trois mutants sont tués.
 
 ## Bilan
 
-`tests/support/raster.py` (rastérisation pypdfium2) et `tests/support/deform.py`
-(rotation, perspective, flou, bruit, contraste, bavure, pliure) livrés. Trois des
-quatre tests du contrat passent, avec un vrai round-trip bout en bout (`tali build` →
-rastérisation → `locate`/`decode_page_qr`) sur du contenu généré, pas simulé.
-
-`test_round_trip_perspective_30_degres` échoue, honnêtement : `decisions/0005` (proposée)
-explique pourquoi et recommande d'étendre `locate()` à une homographie complète.
+`raster.py` (pypdfium2) et `deform.py` (rotation, perspective, flou, bruit,
+contraste, bavure, pliure) livrés. Trois tests sur quatre passent, avec un vrai
+round-trip bout en bout (`tali build` → rastérisation → `locate`/`decode_page_qr`)
+sur du contenu généré, pas simulé. `test_round_trip_perspective_30_degres` échoue
+honnêtement : `decisions/0005` explique pourquoi et recommande l'homographie.
 
 ## Points d'incertitude
 
-- `decisions/0005` attend un arbitrage : upgrader `locate()` en homographie (mon
-  recommandation) change aussi le seuil « refuse sous 3 marqueurs » de `#6` en « sous 4 ».
-- La courbe de dégradation (§13.1 : « donne une courbe... test de non-régression le
-  plus parlant ») n'est pas produite comme artefact ici — seuils nommés testés
-  directement, la production d'une vraie courbe reste à faire.
+- `decisions/0005` : upgrader en homographie change aussi le seuil « sous 3
+  marqueurs » de `#6` en « sous 4 ».
+- La courbe de dégradation (§13.1) n'est pas produite comme artefact — seuils
+  nommés testés directement, la courbe reste à faire.

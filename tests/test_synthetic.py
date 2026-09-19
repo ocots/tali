@@ -59,33 +59,24 @@ def test_round_trip_sans_deformation(rendered_page: np.ndarray) -> None:
 
 def test_round_trip_perspective_30_degres(rendered_page: np.ndarray) -> None:
     """Bloqué par `decisions/0005` (proposée) : `locate()` (#6) est affine, une vraie
-    perspective à 30° ne peut pas s'y ajuster exactement. Voir le suivi de cette tâche
-    pour la mesure de l'écart et la recommandation."""
-    deformed = deform.perspective(rendered_page, degrees=30.0)
-    transform = locate(deformed)  # peut lever LocateError, ou réussir avec un écart trop grand
-
+    perspective à 30° ne s'y ajuste pas exactement — voir le suivi de cette tâche."""
+    transform = locate(deform.perspective(rendered_page, degrees=30.0))
     px_per_mm = DPI / 25.4
     for x_mm, y_mm in marker_positions().values():
         x_px, y_px = transform.to_pixels(x_mm, y_mm)
-        vraie_x, vraie_y = deform.perspective_point(rendered_page.shape, x_mm * px_per_mm, y_mm * px_per_mm, 30.0)
-        assert x_px == pytest.approx(vraie_x, abs=TOLERANCE_PX)
-        assert y_px == pytest.approx(vraie_y, abs=TOLERANCE_PX)
+        vraie = deform.perspective_point(rendered_page.shape, x_mm * px_per_mm, y_mm * px_per_mm, 30.0)
+        assert (x_px, y_px) == pytest.approx(vraie, abs=TOLERANCE_PX)
 
 
-@pytest.mark.parametrize(
-    "amplitude, appliquer",
-    [
-        ("rotation extrême (45°) + flou fort + bruit fort", lambda img: deform.noise(
-            deform.blur(deform.rotate(img, 45.0), sigma=6.0), sigma=60.0
-        )),
-        ("perspective extrême (60°)", lambda img: deform.perspective(img, degrees=60.0)),
-    ],
-    ids=["rotation-flou-bruit", "perspective-extreme"],
-)
-def test_refuse_plutot_que_de_se_tromper_aux_extremes(
-    rendered_page: np.ndarray, amplitude: str, appliquer
-) -> None:
-    """Le critère le plus important : à ces amplitudes, un refus explicite, jamais un
-    recalage silencieusement faux qui corromprait toute la notation en aval."""
+EXTREMES = {
+    "rotation-flou-bruit": lambda img: deform.noise(deform.blur(deform.rotate(img, 45.0), 6.0), 60.0),
+    "perspective-extreme": lambda img: deform.perspective(img, degrees=60.0),
+}
+
+
+@pytest.mark.parametrize("appliquer", EXTREMES.values(), ids=EXTREMES.keys())
+def test_refuse_plutot_que_de_se_tromper_aux_extremes(rendered_page: np.ndarray, appliquer) -> None:
+    """Le critère le plus important : un refus explicite, jamais un recalage
+    silencieusement faux qui corromprait toute la notation en aval."""
     with pytest.raises(LocateError):
         locate(appliquer(rendered_page))
