@@ -27,24 +27,18 @@ indépendant de la rotation. Le vrai piège : **lequel des deux est lequel ?**
 
 Premier essai, faux : trancher par somme de coordonnées (`x+y` le plus petit). Passe en
 orientation normale, **échoue à 180°** — trouvé par `test_leve_orientation_180_degres_
-sans_qr`, qui a fait exactement son travail. Corrigé par une propriété géométrique
-invariante par rotation : dans le gabarit, le marqueur d'orientation est décalé vers le
-reste du bord haut, donc toujours plus proche de n'importe quel autre coin que ne l'est
-le vrai coin haut-gauche (démonstration : différence de distances au carré = fonction
-affine de la coordonnée locale du coin restant, de signe constant pour nos cinq
-positions). Voter sur les marqueurs restants tranche, même avec un seul restant — c'est
-le cas minimal à 3 marqueurs.
+sans_qr`. Corrigé par une propriété géométrique invariante par rotation : le marqueur
+d'orientation est décalé vers le reste du bord haut, donc toujours plus proche de
+n'importe quel autre coin que ne l'est le vrai coin haut-gauche. Voter sur les
+marqueurs restants tranche, même avec un seul restant (le cas minimal à 3 marqueurs).
 
-Ce premier échec ne se voyait pas sur le cas normal (rotation ~0°), seulement à 180° :
-ajouté `test_label_ignore_lordre_de_detection`, qui appelle `_label` directement avec
-l'ordre d'entrée inversé — cv2 ne garantit aucun ordre de contours, le test doit rester
-vrai quel que soit celui-ci, pas seulement pour l'ordre que produit le détecteur
-aujourd'hui.
+Ce premier échec ne se voyait pas en rotation ~0° : ajouté
+`test_label_ignore_lordre_de_detection`, qui appelle `_label` avec l'ordre d'entrée
+inversé — cv2 ne garantit aucun ordre de contours.
 
-Mutation-testés les trois tests du contrat (inversion near/far, vote ignoré, refus
-sous 3 marqueurs désactivé) : le refus sous 3 marqueurs survivait d'abord — le mutant
-retombait par accident sur une erreur différente (`cv2.estimateAffine2D` refusant 2
-points), pas sur le refus explicite voulu. Corrigé en vérifiant le message d'erreur.
+Mutation-testés les trois tests du contrat : le refus sous 3 marqueurs survivait
+d'abord, par un mutant retombant sur une erreur différente (`estimateAffine2D` refusant
+2 points), pas le refus explicite voulu. Corrigé en vérifiant le message d'erreur.
 
 ## Bilan
 
@@ -56,9 +50,7 @@ pour lever l'orientation de façon fiable.
 ## Points d'incertitude
 
 - Le seuil de détection (`cv2.threshold(image, 128, ...)`) est une valeur de départ,
-  jamais vérifiée sur un vrai scan — à revoir avec le spike S2 (#8) ou le corpus
-  synthétique (#7).
+  jamais vérifiée sur un vrai scan — à revoir avec S2 (#8) ou le corpus synthétique (#7).
 - Le vote majoritaire suppose qu'au plus un marqueur restant présente une géométrie
-  atypique (bruit de détection). Avec exactement 2 marqueurs restants en désaccord
-  (cas non couvert par les tests), le résultat dépend de l'ordre de tri Python — à
-  surveiller si `#7` révèle des faux votes en pratique.
+  atypique. Un désaccord à 2 contre 2 (non couvert par les tests) dépendrait de l'ordre
+  de tri Python — à surveiller si #7 révèle des faux votes en pratique.
