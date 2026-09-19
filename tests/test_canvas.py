@@ -19,8 +19,8 @@ class RecordingBackend:
     def __init__(self) -> None:
         self.calls: list[tuple[str, tuple]] = []
 
-    def rect(self, x, y, width, height):
-        self.calls.append(("rect", (x, y, width, height)))
+    def rect(self, x, y, width, height, fill):
+        self.calls.append(("rect", (x, y, width, height, fill)))
 
     def circle(self, x, y, radius):
         self.calls.append(("circle", (x, y, radius)))
@@ -62,6 +62,19 @@ def test_qr_pose_a_la_position_demandee() -> None:
     assert (x, y) == to_reportlab(15, 20 + 25, PAGE_HEIGHT_MM)
     assert size == mm_to_points(25)
     assert payload == "tali:ct-2026-01:0007:1:1"
+
+
+def test_rect_ne_remplit_pas_par_defaut() -> None:
+    """Les marqueurs de calage ont besoin d'un carré plein ; les cadres, d'un contour
+    seul — `fill` doit être explicite, jamais un remplissage silencieux."""
+    backend = RecordingBackend()
+    canvas = Canvas(backend, PAGE_HEIGHT_MM)
+
+    canvas.rect(10, 10, 8, 8)
+    canvas.rect(10, 10, 8, 8, fill=True)
+
+    assert backend.calls[0][1][-1] is False
+    assert backend.calls[1][1][-1] is True
 
 
 def test_reportlab_nest_importe_que_dans_render() -> None:
