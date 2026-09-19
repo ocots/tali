@@ -7,6 +7,12 @@
 Ce n'est pas une file d'attente parallèle : c'est un amorçage. Une fois lancé, la
 seule source de vérité est GitHub, et ce fichier peut être supprimé.
 
+⚠️  DÉJÀ LANCÉ (2026-09-19). GitHub a depuis divergé de ce fichier : l'issue #1
+    a été découpée en #1 (domaine, objets purs) et #11 (codec exam.toml, `blocked`
+    sur #1) après que sa PR a dépassé `max_diff_lines` une fois les deux briques
+    réunies. Ce fichier n'est plus rejoué — il documente l'intention de départ,
+    pas l'état courant du backlog.
+
 ⚠️  Relis les critères `done` avant de lancer. C'est le champ qui décide de tout
     (AGENTS.md) : un `done` mal formulé produit du volume, pas du progrès.
 
