@@ -1,0 +1,53 @@
+# Tâche #7 — Corpus synthétique — rastérisation, déformations, round-trip
+
+- **rôle** : `feature`
+- **critère de complétion** : `.venv/bin/python -m pytest -q tests/test_synthetic.py::test_rend_une_page_a_200_dpi tests/test_synthetic.py::test_round_trip_sans_deformation tests/test_synthetic.py::test_round_trip_perspective_30_degres tests/test_synthetic.py::test_refuse_plutot_que_de_se_tromper_aux_extremes`
+- **périmètre** : `tests/support/**`, `tests/test_synthetic.py`
+- **budget** : 2 sessions
+
+## Plan
+
+- [x] `tests/support/raster.py` (pypdfium2) + `deform.py` (7 déformations nommées)
+- [x] `tests/test_synthetic.py`
+- [x] Corriger un bug de `#6` trouvé en testant contre du contenu réel
+- [x] `test_round_trip_perspective_30_degres` — `decisions/0005`+`0006` actées (PR #20)
+
+## Journal
+
+**`finalize --draft` ne servait à rien : corrigé dans `crank` d'abord.** Son message
+dit « corrige, ou déclare-toi bloqué avec --draft », mais le code refusait la PR avant
+même de regarder `--draft`. Corrigé sur `crank` (`703f999`) : l'hygiène du diff bloque
+toujours, le critère fonctionnel ne bloque plus hors `--draft`.
+
+**Le conflit de fond, découvert en écrivant le round-trip, pas en le lisant.** `#6` a
+choisi l'affine, en supposant le scan à plat suffisant. `test_round_trip_perspective_
+30_degres` demande une vraie perspective (§13.1 la distingue de la rotation ; §9.4 en
+fait un cas du canal photo). Vérifié numériquement (`decisions/0005`) : une affine
+ajustée sur une vraie perspective à 30° laisse des dizaines de pixels d'erreur, plus
+qu'une bulle QCM. Je ne tranche pas seul un retour sur une tâche déjà mergée.
+
+**Un bug réel dans `find_marker_centers` (#6), trouvé en le confrontant à une vraie
+page construite**, pas aux marqueurs synthétiques isolés de ses propres tests : le
+remplissage se mesurait par l'aire du contour (`cv2.contourArea`), qui vaut ~toute la
+boîte même pour un contour **creux** — chaque case des grilles NOM/PRÉNOM était
+détectée comme marqueur. Corrigé en mesurant les pixels réellement sombres. (Un
+second « bug » suspecté ensuite près du QR s'est révélé être un `__pycache__`
+obsolète de ce worktree — vidé, revérifié avec `python -B`, aucun code à changer.)
+
+**`decisions/0005` mergée (PR #20), rebasé dessus — un second blocage restait.**
+L'homographie seule ne suffisait pas : `find_marker_centers` (#6) ne détecte plus
+assez de marqueurs sous une vraie perspective de coin à 30° (`decisions/0006`,
+actée A). Focale de prise de vue allongée pour ce test (`PERSPECTIVE_FOCAL_PX`),
+sans toucher la détection : les quatre tests du critère passent.
+
+## Bilan
+
+`raster.py` (pypdfium2) et `deform.py` (rotation, perspective, flou, bruit,
+contraste, bavure, pliure) livrés, round-trip bout en bout (`tali build` →
+rastérisation → `locate`/`decode_page_qr`) sur du contenu généré, pas simulé. Les
+quatre tests du critère de complétion passent (`decisions/0005`+`0006` actées).
+
+## Points d'incertitude
+
+- La courbe de dégradation (§13.1) n'est pas produite comme artefact — seuils
+  nommés testés directement, la courbe reste à faire.
