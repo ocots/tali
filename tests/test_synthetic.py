@@ -57,14 +57,21 @@ def test_round_trip_sans_deformation(rendered_page: np.ndarray) -> None:
         assert y_px == pytest.approx(y_mm * px_per_mm, abs=TOLERANCE_PX)
 
 
+PERSPECTIVE_FOCAL_PX = 40_000.0  # decisions/0006 A : focale longue, marqueurs restent
+# détectables (grand-angle par défaut de deform.perspective les sort du cadre à 30°)
+
+
 def test_round_trip_perspective_30_degres(rendered_page: np.ndarray) -> None:
-    """Bloqué par `decisions/0005` (proposée) : `locate()` (#6) est affine, une vraie
-    perspective à 30° ne s'y ajuste pas exactement — voir le suivi de cette tâche."""
-    transform = locate(deform.perspective(rendered_page, degrees=30.0))
+    """`locate()` retrouve une vraie perspective (décision `0005` A). Focale allongée
+    pour rester dans ce que `find_marker_centers` sait détecter (décision `0006` A) :
+    le canal photo grand-angle reste hors périmètre de novembre."""
+    transform = locate(deform.perspective(rendered_page, degrees=30.0, focal_px=PERSPECTIVE_FOCAL_PX))
     px_per_mm = DPI / 25.4
     for x_mm, y_mm in marker_positions().values():
         x_px, y_px = transform.to_pixels(x_mm, y_mm)
-        vraie = deform.perspective_point(rendered_page.shape, x_mm * px_per_mm, y_mm * px_per_mm, 30.0)
+        vraie = deform.perspective_point(
+            rendered_page.shape, x_mm * px_per_mm, y_mm * px_per_mm, 30.0, focal_px=PERSPECTIVE_FOCAL_PX
+        )
         assert (x_px, y_px) == pytest.approx(vraie, abs=TOLERANCE_PX)
 
 

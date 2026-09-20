@@ -4,14 +4,13 @@
 - **critère de complétion** : `.venv/bin/python -m pytest -q tests/test_synthetic.py::test_rend_une_page_a_200_dpi tests/test_synthetic.py::test_round_trip_sans_deformation tests/test_synthetic.py::test_round_trip_perspective_30_degres tests/test_synthetic.py::test_refuse_plutot_que_de_se_tromper_aux_extremes`
 - **périmètre** : `tests/support/**`, `tests/test_synthetic.py`
 - **budget** : 2 sessions
-- **bloqué** : `test_round_trip_perspective_30_degres` — voir `decisions/0005` (proposée)
 
 ## Plan
 
 - [x] `tests/support/raster.py` (pypdfium2) + `deform.py` (7 déformations nommées)
 - [x] `tests/test_synthetic.py`
 - [x] Corriger un bug de `#6` trouvé en testant contre du contenu réel
-- [ ] `test_round_trip_perspective_30_degres` — **bloqué**, voir `decisions/0005`
+- [x] `test_round_trip_perspective_30_degres` — `decisions/0005`+`0006` actées (PR #20)
 
 ## Journal
 
@@ -35,20 +34,20 @@ détectée comme marqueur. Corrigé en mesurant les pixels réellement sombres. 
 second « bug » suspecté ensuite près du QR s'est révélé être un `__pycache__`
 obsolète de ce worktree — vidé, revérifié avec `python -B`, aucun code à changer.)
 
-Les trois tests atteignables mutation-testés (seuil relâché, facteur dpi erroné,
-déformation extrême neutralisée) : les trois mutants sont tués.
+**`decisions/0005` mergée (PR #20), rebasé dessus — un second blocage restait.**
+L'homographie seule ne suffisait pas : `find_marker_centers` (#6) ne détecte plus
+assez de marqueurs sous une vraie perspective de coin à 30° (`decisions/0006`,
+actée A). Focale de prise de vue allongée pour ce test (`PERSPECTIVE_FOCAL_PX`),
+sans toucher la détection : les quatre tests du critère passent.
 
 ## Bilan
 
 `raster.py` (pypdfium2) et `deform.py` (rotation, perspective, flou, bruit,
-contraste, bavure, pliure) livrés. Trois tests sur quatre passent, avec un vrai
-round-trip bout en bout (`tali build` → rastérisation → `locate`/`decode_page_qr`)
-sur du contenu généré, pas simulé. `test_round_trip_perspective_30_degres` échoue
-honnêtement : `decisions/0005` explique pourquoi et recommande l'homographie.
+contraste, bavure, pliure) livrés, round-trip bout en bout (`tali build` →
+rastérisation → `locate`/`decode_page_qr`) sur du contenu généré, pas simulé. Les
+quatre tests du critère de complétion passent (`decisions/0005`+`0006` actées).
 
 ## Points d'incertitude
 
-- `decisions/0005` : upgrader en homographie change aussi le seuil « sous 3
-  marqueurs » de `#6` en « sous 4 ».
 - La courbe de dégradation (§13.1) n'est pas produite comme artefact — seuils
   nommés testés directement, la courbe reste à faire.
