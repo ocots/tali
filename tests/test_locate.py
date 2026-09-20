@@ -84,12 +84,14 @@ def test_label_ignore_lordre_de_detection() -> None:
         assert labels["orientation"] == pytest.approx(positions["orientation"])
 
 
-def test_refuse_si_moins_de_trois_marqueurs() -> None:
+def test_refuse_si_moins_de_quatre_marqueurs() -> None:
+    """Une homographie complète (décision `0005` A) a besoin de 4 correspondances,
+    pas 3 : trois marqueurs ne suffisent plus."""
     identity = similarity(angle_deg=0.0, scale=PX_PER_MM, tx=100.0, ty=100.0)
-    image = draw_markers(identity, drop=frozenset({"orientation", "haut-droit", "bas-gauche"}))
+    image = draw_markers(identity, drop=frozenset({"bas-gauche", "bas-droit"}))
     with pytest.raises(LocateError) as err:
         locate(image)
-    assert "moins de trois" in str(err.value)
+    assert "moins de quatre" in str(err.value)
 
 
 def test_refuse_une_page_blanche() -> None:
@@ -98,12 +100,13 @@ def test_refuse_une_page_blanche() -> None:
 
 
 def test_refuse_si_les_marqueurs_sont_trop_proches_pour_lever_lorientation() -> None:
-    """Trois marqueurs équidistants ne permettent pas d'identifier une paire proche
-    fiable : refuser plutôt que deviner une orientation au hasard."""
-    identity = similarity(angle_deg=0.0, scale=PX_PER_MM, tx=100.0, ty=100.0)
+    """Marqueurs équidistants (+ un quatrième, éloigné, pour atteindre le minimum de la
+    décision `0005` A) ne permettent pas d'identifier une paire proche fiable : refuser
+    plutôt que deviner une orientation au hasard."""
     image = np.full((CANVAS, CANVAS), 255, dtype=np.uint8)
     half = int(DEFAULT.marker_size_mm * PX_PER_MM / 2)
-    for x_px, y_px in ((200, 200), (260, 200), (230, 260)):
+    for x_px, y_px in ((200, 200), (260, 200), (230, 260), (200, 800)):
         cv2.rectangle(image, (x_px - half, y_px - half), (x_px + half, y_px + half), 0, -1)
-    with pytest.raises(LocateError):
+    with pytest.raises(LocateError) as err:
         locate(image)
+    assert "se distinguent pas assez" in str(err.value)

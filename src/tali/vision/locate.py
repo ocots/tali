@@ -1,9 +1,9 @@
-"""Détection des marqueurs et homographie (décision `0001` A).
+"""Détection des marqueurs et homographie (décisions `0001` A, `0005` A).
 
-Modèle géométrique : **affine** (rotation, échelle, translation, cisaillement), pas
-une homographie projective complète — suffisant pour un scanner à plat. Le canal
-photo, qui introduirait une vraie perspective, est explicitement hors du périmètre de
-novembre (AGENTS.md).
+Modèle géométrique : **homographie complète** (`cv2.findHomography`, 4
+correspondances minimum), pas une simple affine — une affine ne peut pas représenter
+la vraie perspective projective du canal photo (§9.4, `decisions/0005`), et sous-corrige
+silencieusement un basculement, au risque de recadrer sur la mauvaise case.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from tali.render.dimensions import DEFAULT, Dimensions
 
 
 class LocateError(ValueError):
-    """Moins de trois marqueurs trouvés, ou géométrie trop ambiguë pour être fiable."""
+    """Moins de quatre marqueurs trouvés, ou géométrie trop ambiguë pour être fiable."""
 
 
 def marker_positions(dims: Dimensions = DEFAULT) -> dict[str, tuple[float, float]]:
@@ -40,33 +40,38 @@ def marker_positions(dims: Dimensions = DEFAULT) -> dict[str, tuple[float, float
 
 @dataclass(frozen=True)
 class Transform:
-    """Une transformation affine millimètres → pixels, et son inverse."""
+    """Une homographie millimètres → pixels, et son inverse (décision `0005` A)."""
 
-    matrix: np.ndarray  # 2×3, comme OpenCV
+    matrix: np.ndarray  # 3×3, comme OpenCV
 
     def to_pixels(self, x_mm: float, y_mm: float) -> tuple[float, float]:
-        x, y = self.matrix @ np.array([x_mm, y_mm, 1.0])
-        return float(x), float(y)
+        x, y, w = self.matrix @ np.array([x_mm, y_mm, 1.0])
+        return float(x / w), float(y / w)
 
     def to_mm(self, x_px: float, y_px: float) -> tuple[float, float]:
-        inverse = cv2.invertAffineTransform(self.matrix)
-        x, y = inverse @ np.array([x_px, y_px, 1.0])
-        return float(x), float(y)
+        x, y, w = np.linalg.inv(self.matrix) @ np.array([x_px, y_px, 1.0])
+        return float(x / w), float(y / w)
 
 
 def find_marker_centers(image: np.ndarray) -> list[tuple[float, float]]:
-    """Détecte des carrés noirs pleins par seuillage puis filtrage sur la forme."""
+    """Détecte des carrés noirs **pleins** par seuillage puis filtrage sur la forme.
+
+    Le remplissage se mesure en pixels réellement sombres dans le rectangle englobant,
+    pas par l'aire du contour : `cv2.contourArea` mesure l'aire du polygone tracé, qui
+    vaut ~toute la boîte même pour un contour **creux** (un cadre de case d'identité,
+    par exemple) — seul le tracé du bord est sombre, l'intérieur reste blanc. Confondre
+    les deux a fait détecter chaque case des grilles NOM/PRÉNOM comme un marqueur.
+    """
     _, binary = cv2.threshold(image, 128, 255, cv2.THRESH_BINARY_INV)
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     centers: list[tuple[float, float]] = []
     for contour in contours:
-        area = cv2.contourArea(contour)
-        if area < 20:  # bruit de seuillage
+        if cv2.contourArea(contour) < 20:  # bruit de seuillage
             continue
         x, y, w, h = cv2.boundingRect(contour)
         squareness = min(w, h) / max(w, h)
-        fill_ratio = area / (w * h)
-        if squareness > 0.8 and fill_ratio > 0.7:
+        pixel_fill = float(np.count_nonzero(binary[y : y + h, x : x + w])) / (w * h)
+        if squareness > 0.8 and pixel_fill > 0.9:
             centers.append((x + w / 2, y + h / 2))
     return centers
 
@@ -80,8 +85,8 @@ def _label(centers: list[tuple[float, float]]) -> dict[str, tuple[float, float]]
     paire la plus proche identifie le coin haut-gauche **quelle que soit la rotation
     de la page dans l'image** : c'est une relation rigide, elle survit à la rotation.
     """
-    if len(centers) < 3:
-        raise LocateError(f"moins de trois marqueurs détectés ({len(centers)})")
+    if len(centers) < 4:
+        raise LocateError(f"moins de quatre marqueurs détectés ({len(centers)})")
 
     pts = np.array(centers, dtype=np.float64)
     n = len(pts)
@@ -98,7 +103,7 @@ def _label(centers: list[tuple[float, float]]) -> dict[str, tuple[float, float]]
     # vers le reste du bord haut (décision 0001 A), donc systématiquement plus proche
     # de n'importe quel autre coin que ne l'est le vrai coin haut-gauche — une relation
     # de distances relatives, préservée par n'importe quelle rotation/mise à l'échelle
-    # uniforme. Voter sur les marqueurs restants tranche, même avec un seul restant.
+    # uniforme. Voter sur les marqueurs restants (au moins deux, décision `0005` A) tranche.
     votes_j_est_orientation = sum(
         1 for r in remaining if np.linalg.norm(pts[j] - r) < np.linalg.norm(pts[i] - r)
     )
@@ -127,7 +132,7 @@ def locate(image: np.ndarray, dims: Dimensions = DEFAULT) -> Transform:
 
     src = np.array([expected[k] for k in labels], dtype=np.float32)
     dst = np.array([labels[k] for k in labels], dtype=np.float32)
-    matrix, _ = cv2.estimateAffine2D(src, dst)
+    matrix, _ = cv2.findHomography(src, dst)
     if matrix is None:
         raise LocateError("transformation non trouvée à partir des marqueurs détectés")
     return Transform(matrix=matrix)
